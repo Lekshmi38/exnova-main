@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+
+
+{% block content %}
+<div class="form-container">
+    <div class="card-header">
+        <h2><i class="fas fa-cog"></i> Set Examination Type</h2>
+    </div>
+    
+    <form method="POST" action="{{ url_for('set_exam_type') }}">
+        <div class="form-group">
+            <label for="exam_type"><i class="fas fa-graduation-cap"></i> Examination Type</label>
+            <select name="exam_type" id="exam_type" required>
+                <option value="">Select Exam Type</option>
+                <option value="Regular">Regular Examination</option>
+                <option value="Supplementary">Supplementary Examination</option>
+                <option value="Revaluation">Revaluation</option>
+                <option value="Special">Special Examination</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn">
+            <i class="fas fa-check-circle"></i> Set Examination Type
+        </button>
+    </form>
+
+    {% if session.get('exam_type') %}
+    <div class="instruction-card">
+        <h3><i class="fas fa-info-circle"></i> Instructions</h3>
+        <ol>
+            <li>First, set the examination type from above</li>
+            <li>Go to <strong>Data Upload</strong> to upload master Excel file</li>
+            <li>The system will automatically sort and organize data by slots</li>
+            <li>Go to <strong>Seat Allocation</strong> to generate seating arrangements</li>
+            <li>Go to <strong>Preview Details</strong> to download files</li>
+        </ol>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Preview Details - Exam System{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="card-header">
+        <h2><i class="fas fa-eye"></i> Preview & Download Files</h2>
+        {% if session.get('exam_type') %}
+        <span class="badge">
+            {{ session.exam_type }} Exam
+        </span>
+        {% endif %}
+    </div>
+
+    {% if not session.get('exam_type') %}
+    <div class="alert">
+        <i class="fas fa-exclamation-triangle"></i>
+        Please set the examination type first from the Home page.
+        <a href="{{ url_for('index') }}" class="btn">
+            <i class="fas fa-home"></i> Go to Home
+        </a>
+    </div>
+    {% else %}
+    <form method="POST" action="{{ url_for('preview') }}">
+        <div class="form-group">
+            <label for="semester"><i class="fas fa-layer-group"></i> Semester</label>
+            <select name="semester" id="semester" required>
+                <option value="">Select Semester</option>
+                {% for sem in ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8'] %}
+                <option value="{{ sem }}" {% if request.method == 'POST' and semester == sem %}selected{% endif %}>
+                    {{ sem }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="month_year"><i class="fas fa-calendar"></i> Month-Year (YYYY-MM)</label>
+            <input type="text" id="month_year" name="month_year"
+                   placeholder="e.g., 2026-05" required
+                   pattern="\d{4}-\d{2}"
+                   title="Format: YYYY-MM (e.g., 2026-05)"
+                   value="{% if request.method == 'POST' %}{{ month_year or '' }}{% endif %}">
+        </div>
+
+        <button type="submit" class="btn">
+            <i class="fas fa-search"></i> Find Files
+        </button>
+    </form>
+    {% endif %}
+</div>
+
+<!-- ONLY SHOW FILES SECTION AFTER FORM SUBMISSION -->
+{% if request.method == 'POST' %}
+<div class="card">
+    <div class="card-header">
+        <h2>
+            <i class="fas fa-folder-open"></i> Available Files
+            <small style="font-size: 0.9rem; color: var(--text-light);">
+                {{ semester }} - {{ month_year }}
+            </small>
+        </h2>
+    </div>
+
+    <!-- Show message if no files found -->
+    {% if not master_file_exists and slot_folders|length == 0 %}
+    <div style="padding: 30px; text-align: center;">
+        <i class="fas fa-folder-open" style="font-size: 3rem; color: var(--pastel-blue); margin-bottom: 15px;"></i>
+        <h3 style="color: var(--text-light); margin-bottom: 10px;">No Files Found</h3>
+        <p style="color: var(--text-light); margin-bottom: 20px;">
+            No files found for semester {{ semester }} and month-year {{ month_year }}
+        </p>
+        <div style="background: rgba(179, 217, 255, 0.1); padding: 15px; border-radius: 8px; text-align: left; margin-top: 20px;">
+            <h4 style="color: var(--primary-blue); margin-bottom: 10px;">
+                <i class="fas fa-info-circle"></i> Expected Folder Structure:
+            </h4>
+            <pre style="background: var(--white); padding: 10px; border-radius: 5px; font-size: 0.9rem;">
+{{ session.exam_type }}/
+└── {{ semester }}/
+    └── {{ month_year }}/
+        ├── master_list/
+        │   └── Master_Sorted_List.xlsx
+        └── slot_A/
+            └── 2025-04-25/
+                ├── Slot_A_2025-04-25_Sorted_List.xlsx
+                ├── seating_report.txt
+                ├── qp_counts.txt
+                └── seating_arrangement.json
+            </pre>
+        </div>
+    </div>
+    {% else %}
+    <div class="file-grid">
+        <!-- Master File -->
+        {% if master_file_exists %}
+        <div class="file-card">
+            <div class="slot-header">
+                <i class="fas fa-file-alt"></i>
+                <h3>Master File</h3>
+            </div>
+            <p style="color: var(--text-light); margin-bottom: 20px;">Complete sorted master list</p>
+            <a href="{{ url_for('download_master', exam_type=session.exam_type, semester=semester, month_year=month_year) }}"
+               class="btn btn-teal">
+                <i class="fas fa-download"></i> Download Master
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Slot Files -->
+        {% for slot_info in slot_folders %}
+        <div class="file-card">
+            <div class="slot-header">
+                <i class="fas fa-clock"></i>
+                <h3>Slot {{ slot_info.name }}</h3>
+                <span class="badge" style="background: var(--pastel-blue); color: var(--text-dark);">
+                    {{ slot_info.date_folders|length }} date(s)
+                </span>
+            </div>
+
+            <!-- Date Folders -->
+            {% for date_folder in slot_info.date_folders %}
+            <div class="date-section" style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(74, 144, 226, 0.1);">
+                <h4 style="color: var(--primary-blue); margin-bottom: 10px;">
+                    <i class="fas fa-calendar-day"></i> {{ date_folder.date }}
+                </h4>
+
+                <!-- Files in this date -->
+                {% if date_folder.files %}
+                <div class="file-list">
+                    {% for file in date_folder.files %}
+                    <div class="file-item" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 8px; background: rgba(179, 217, 255, 0.05); border-radius: 6px;">
+                        <span style="font-size: 0.9rem;">
+                            {% if file.type == 'slot' %}
+                            <i class="fas fa-file-excel text-success"></i>
+                            {% elif file.type == 'report' %}
+                            <i class="fas fa-file-alt text-primary"></i>
+                            {% elif file.type == 'json' %}
+                            <i class="fas fa-code text-warning"></i>
+                            {% else %}
+                            <i class="fas fa-file"></i>
+                            {% endif %}
+                            {{ file.name }}
+                        </span>
+                        <a href="{{ url_for('download_file', exam_type=session.exam_type, semester=semester, month_year=month_year, slot=slot_info.name, date=date_folder.date, filename=file.name) }}"
+                           class="btn btn-small" style="padding: 4px 12px; font-size: 0.8rem;">
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="color: var(--text-light); font-size: 0.9rem; text-align: center;">No files</p>
+                {% endif %}
+
+                <!-- QP Counts Preview -->
+                {% if date_folder.qp_data and date_folder.qp_data.has_data %}
+                <div class="qp-preview" style="margin-top: 10px; background: rgba(32, 178, 170, 0.05); padding: 10px; border-radius: 6px; border-left: 3px solid var(--teal);">
+                    <h5 style="margin: 0 0 5px 0; color: var(--teal); font-size: 0.9rem;">
+                        <i class="fas fa-file-excel"></i> QP Counts Preview
+                    </h5>
+                    <pre style="font-size: 0.8rem; color: var(--text-light); margin: 0; white-space: pre-wrap; max-height: 100px; overflow-y: auto;">
+{{ date_folder.qp_data.content }}
+                    </pre>
+                    {% if date_folder.files %}
+                        {% for file in date_folder.files %}
+                            {% if 'qp_counts' in file.name %}
+                            <a href="{{ url_for('download_file', exam_type=session.exam_type, semester=semester, month_year=month_year, slot=slot_info.name, date=date_folder.date, filename=file.name) }}"
+                               class="btn btn-small btn-teal" style="padding: 3px 10px; font-size: 0.8rem; margin-top: 5px;">
+                                <i class="fas fa-download"></i> Full QP Report
+                            </a>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <!-- Generate Arrangement Button -->
+            {% if slot_info.date_folders and slot_info.date_folders|length > 0 %}
+            <div style="margin-top: 15px;">
+                <a href="{{ url_for('allocation') }}?semester={{ semester }}&month_year={{ month_year }}&slot={{ slot_info.name }}"
+                   class="btn btn-generate" style="width: 100%;">
+                    <i class="fas fa-cogs"></i> Generate/Regenerate Seating
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<style>
+.file-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.file-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(74, 144, 226, 0.1);
+    transition: transform 0.3s;
+}
+
+.file-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 20px rgba(74, 144, 226, 0.15);
+}
+
+.slot-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(74, 144, 226, 0.1);
+}
+
+.btn-small {
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    border-radius: 4px;
+}
+
+.btn-generate {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--sky-blue) 100%);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.btn-generate:hover {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, #2c5aa0 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
+}
+
+.date-section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.text-success { color: var(--success); }
+.text-primary { color: var(--primary-blue); }
+.text-warning { color: var(--warning); }
+</style>
+{% endblock %}

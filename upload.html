@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Data Upload - Exam System{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="card-header">
+        <h2><i class="fas fa-upload"></i> Upload Master File</h2>
+        {% if session.get('exam_type') %}
+        <span class="badge">
+            {{ session.exam_type }} Exam
+        </span>
+        {% endif %}
+    </div>
+
+    {% if not session.get('exam_type') %}
+    <div class="alert">
+        <i class="fas fa-exclamation-triangle"></i>
+        Please set the examination type first from the Home page.
+        <a href="{{ url_for('index') }}" class="btn">
+            <i class="fas fa-home"></i> Go to Home
+        </a>
+    </div>
+    {% else %}
+    <form method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="semester"><i class="fas fa-layer-group"></i> Semester</label>
+            <select name="semester" id="semester" required>
+                <option value="">Select Semester</option>
+                <option value="S1">Semester 1</option>
+                <option value="S2">Semester 2</option>
+                <option value="S3">Semester 3</option>
+                <option value="S4">Semester 4</option>
+                <option value="S5">Semester 5</option>
+                <option value="S6">Semester 6</option>
+                <option value="S7">Semester 7</option>
+                <option value="S8">Semester 8</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="month_year"><i class="fas fa-calendar"></i> Month-Year</label>
+            <input type="month" id="month_year" name="month_year" required>
+            <small style="color: var(--text-light); font-size: 0.9rem;">Select month and year of examination</small>
+        </div>
+
+        <div class="form-group">
+            <label><i class="fas fa-file-excel"></i> Master File Upload</label>
+            <div class="file-upload">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Click to upload master Excel file</p>
+                <span>File should contain: Student, Register No, Branch, Slot, Course, Exam Date</span>
+                <input type="file" name="master_file" accept=".xlsx,.xls" required>
+            </div>
+        </div>
+
+        <button type="submit" class="btn">
+            <i class="fas fa-upload"></i> Upload & Process File
+        </button>
+    </form>
+
+    <div class="instruction-card" style="margin-top: 30px;">
+        <h3><i class="fas fa-info-circle"></i> Folder Structure Created</h3>
+        <p style="color: var(--text-light); line-height: 1.6;">
+            Files will be organized in: <br>
+            <code style="background: var(--light-blue); padding: 8px 12px; border-radius: 6px; display: inline-block; margin-top: 10px;">
+                {{ session.exam_type }}/semester/month-year/<br>
+                ├── master_list/Master_Sorted_List.xlsx<br>
+                ├── slot_A/date/Slot_A_date_Sorted_List.xlsx<br>
+                └── slot_B/date/Slot_B_date_Sorted_List.xlsx
+            </code>
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

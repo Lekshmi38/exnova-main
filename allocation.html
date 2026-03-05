@@ -1,0 +1,428 @@
+{% extends "base.html" %}
+
+{% block title %}Seat Allocation - Exam System{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="card-header">
+        <h2><i class="fas fa-chair"></i> Generate Seating Arrangement</h2>
+        {% if session.get('exam_type') %}
+        <span class="badge">
+            {{ session.exam_type }} Exam
+        </span>
+        {% endif %}
+    </div>
+
+    {% if not session.get('exam_type') %}
+    <div class="alert">
+        <i class="fas fa-exclamation-triangle"></i>
+        Please set the examination type first from the Home page.
+        <a href="{{ url_for('index') }}" class="btn">
+            <i class="fas fa-home"></i> Go to Home
+        </a>
+    </div>
+    {% else %}
+    <form method="POST" action="{{ url_for('allocation') }}">
+        <div class="form-group">
+            <label for="semester"><i class="fas fa-layer-group"></i> Semester</label>
+            <select name="semester" id="semester" required>
+                <option value="">Select Semester</option>
+                <option value="S1">Semester 1</option>
+                <option value="S2">Semester 2</option>
+                <option value="S3">Semester 3</option>
+                <option value="S4">Semester 4</option>
+                <option value="S5">Semester 5</option>
+                <option value="S6">Semester 6</option>
+                <option value="S7">Semester 7</option>
+                <option value="S8">Semester 8</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="month_year"><i class="fas fa-calendar"></i> Month-Year</label>
+            <input type="month" id="month_year" name="month_year" required>
+            <small style="color: var(--text-light); font-size: 0.9rem;">Select month and year of examination</small>
+        </div>
+
+        <div class="form-group">
+            <label for="slot"><i class="fas fa-clock"></i> Slot</label>
+            <select name="slot" id="slot" required>
+                <option value="">Select Slot</option>
+                <option value="A">Slot A</option>
+                <option value="B">Slot B</option>
+                <option value="C">Slot C</option>
+                <option value="D">Slot D</option>
+                <option value="E">Slot E</option>
+                <option value="F">Slot F</option>
+                <option value="G">Slot G</option>
+                <option value="H">Slot H</option>
+            </select>
+            <small style="color: var(--text-light); font-size: 0.9rem;">Select the slot for allocation</small>
+        </div>
+
+        <!-- Elective Type Selection -->
+        <div class="form-group">
+            <label><i class="fas fa-graduation-cap"></i> Elective Type Selection</label>
+            <div class="elective-options">
+                <div class="radio-option">
+                    <input type="radio" id="general" name="elective_type" value="general" checked>
+                    <label for="general" class="radio-label">
+                        <span class="selection-indicator">
+                            <i class="fas fa-check"></i>
+                        </span>
+                        <span class="option-icon">
+                            <i class="fas fa-cogs"></i>
+                        </span>
+                        <div class="option-content">
+                            <strong>General Algorithm</strong>
+                            <small>Standard seating arrangement (Default)</small>
+                        </div>
+                        <span class="selected-badge">Selected</span>
+                    </label>
+                </div>
+
+                <div class="radio-option">
+                    <input type="radio" id="program_elective" name="elective_type" value="program_elective">
+                    <label for="program_elective" class="radio-label">
+                        <span class="selection-indicator">
+                            <i class="fas fa-check"></i>
+                        </span>
+                        <span class="option-icon">
+                            <i class="fas fa-code"></i>
+                        </span>
+                        <div class="option-content">
+                            <strong>Program Elective</strong>
+                            <small>Use program_elect.py algorithm</small>
+                        </div>
+                        <span class="selected-badge">Selected</span>
+                    </label>
+                </div>
+
+                <div class="radio-option">
+                    <input type="radio" id="open_elective" name="elective_type" value="open_elective">
+                    <label for="open_elective" class="radio-label">
+                        <span class="selection-indicator">
+                            <i class="fas fa-check"></i>
+                        </span>
+                        <span class="option-icon">
+                            <i class="fas fa-book-open"></i>
+                        </span>
+                        <div class="option-content">
+                            <strong>Open Elective</strong>
+                            <small>Use open_elect.py algorithm</small>
+                        </div>
+                        <span class="selected-badge">Selected</span>
+                    </label>
+                </div>
+            </div>
+            <small style="color: var(--text-light); font-size: 0.9rem; display: block; margin-top: 8px;">
+                <i class="fas fa-info-circle"></i> Select the algorithm type for seating arrangement generation
+            </small>
+        </div>
+
+        <button type="submit" class="btn">
+            <i class="fas fa-cogs"></i> Generate Seating Arrangement
+        </button>
+    </form>
+
+    <div class="instruction-card" style="margin-top: 30px;">
+        <h3><i class="fas fa-info-circle"></i> How It Works</h3>
+        <ol>
+            <li>Select semester, month-year, and slot</li>
+            <li>Select the elective type (algorithm to use)</li>
+            <li>System automatically finds the exam date from uploaded files</li>
+            <li>Generates seating arrangement using selected algorithm</li>
+            <li>Creates QP count report showing subjects in each room</li>
+            <li>All files saved in: <code>{{ session.exam_type }}/semester/month-year/slot_X/date/</code></li>
+        </ol>
+
+        <div class="algorithm-info" style="margin-top: 15px; padding: 15px; background: var(--light-blue); border-radius: 8px;">
+            <h4><i class="fas fa-code"></i> Algorithm Information:</h4>
+            <ul style="margin-bottom: 0;">
+                <li><strong>General Algorithm:</strong> Standard seating arrangement for regular subjects</li>
+                <li><strong>Program Elective:</strong> Special algorithm for program elective subjects (requires program_elect.py)</li>
+                <li><strong>Open Elective:</strong> Special algorithm for open elective subjects (requires open_elect.py)</li>
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.elective-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.radio-option {
+    position: relative;
+}
+
+.radio-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.radio-option .radio-label {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    background: #ffffff;
+    position: relative;
+    overflow: hidden;
+}
+
+.radio-option .radio-label:hover {
+    border-color: #4a6cf7;
+    background: #f8f9ff;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(74, 108, 247, 0.1);
+}
+
+/* Selection indicator (checkmark in circle) */
+.selection-indicator {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #e0e0e0;
+    border-radius: 50%;
+    margin-right: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+    background: #f8f9ff;
+}
+
+.selection-indicator i {
+    font-size: 12px;
+    color: transparent;
+    transition: all 0.3s ease;
+}
+
+/* Option icon */
+.option-icon {
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.option-icon i {
+    font-size: 28px;
+    color: #666;
+    transition: all 0.3s ease;
+}
+
+/* Option content */
+.option-content {
+    flex: 1;
+}
+
+.option-content strong {
+    display: block;
+    color: #333;
+    margin-bottom: 5px;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.option-content small {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+/* Selected badge */
+.selected-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #4a6cf7;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+/* SELECTED STATE - COLOR BOX EFFECT */
+.radio-option input[type="radio"]:checked + .radio-label {
+    border-color: #4a6cf7;
+    background: linear-gradient(135deg, #f8f9ff 0%, #eef1ff 100%);
+    box-shadow: 0 8px 25px rgba(74, 108, 247, 0.15);
+    transform: translateY(-2px);
+}
+
+/* Selection indicator when selected */
+.radio-option input[type="radio"]:checked + .radio-label .selection-indicator {
+    border-color: #4a6cf7;
+    background: #4a6cf7;
+}
+
+.radio-option input[type="radio"]:checked + .radio-label .selection-indicator i {
+    color: white;
+}
+
+/* Icon when selected */
+.radio-option input[type="radio"]:checked + .radio-label .option-icon i {
+    color: #4a6cf7;
+    transform: scale(1.1);
+}
+
+/* Content when selected */
+.radio-option input[type="radio"]:checked + .radio-label .option-content strong {
+    color: #4a6cf7;
+}
+
+/* Show selected badge */
+.radio-option input[type="radio"]:checked + .radio-label .selected-badge {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Add a subtle glow effect */
+.radio-option input[type="radio"]:checked + .radio-label::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #4a6cf7, #6a82fb);
+    border-radius: 12px 12px 0 0;
+}
+
+/* Focus state for accessibility */
+.radio-option input[type="radio"]:focus + .radio-label {
+    outline: 2px solid #4a6cf7;
+    outline-offset: 2px;
+}
+
+.algorithm-info {
+    border-left: 4px solid #4a6cf7;
+    background: #f8f9ff;
+}
+
+.algorithm-info h4 {
+    color: #4a6cf7;
+    margin-bottom: 10px;
+}
+
+.algorithm-info ul {
+    padding-left: 20px;
+}
+
+.algorithm-info li {
+    margin-bottom: 8px;
+    color: #444;
+}
+
+/* Animation for selection */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.radio-option input[type="radio"]:checked + .radio-label {
+    animation: pulse 0.3s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .radio-option .radio-label {
+        padding: 15px;
+    }
+
+    .option-icon i {
+        font-size: 24px;
+    }
+
+    .selection-indicator {
+        width: 20px;
+        height: 20px;
+        margin-right: 12px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const radioButtons = document.querySelectorAll('.radio-option input[type="radio"]');
+    const labels = document.querySelectorAll('.radio-label');
+
+    // Function to update all labels
+    function updateSelection() {
+        labels.forEach(label => {
+            label.classList.remove('selected');
+            label.style.borderColor = '#e0e0e0';
+            label.style.background = '#ffffff';
+            label.style.boxShadow = 'none';
+        });
+
+        radioButtons.forEach(radio => {
+            if (radio.checked) {
+                const label = radio.nextElementSibling;
+                label.classList.add('selected');
+
+                // Add stronger visual feedback
+                label.style.borderColor = '#4a6cf7';
+                label.style.background = 'linear-gradient(135deg, #f8f9ff 0%, #eef1ff 100%)';
+                label.style.boxShadow = '0 8px 25px rgba(74, 108, 247, 0.15)';
+            }
+        });
+    }
+
+    // Initialize selection
+    updateSelection();
+
+    // Add event listeners
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', updateSelection);
+    });
+
+    // Add click animation
+    labels.forEach(label => {
+        label.addEventListener('click', function(e) {
+            // Find the radio input
+            const radioId = this.getAttribute('for');
+            const radio = document.getElementById(radioId);
+
+            if (radio) {
+                // Add visual feedback
+                this.style.transform = 'scale(0.98)';
+
+                // Reset transform after animation
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 150);
+
+                // Update selection
+                radio.checked = true;
+                updateSelection();
+
+                // Prevent default form behavior
+                e.preventDefault();
+            }
+        });
+    });
+
+    // Highlight the default selected option on page load
+    const defaultRadio = document.querySelector('input[type="radio"][value="general"]:checked');
+    if (defaultRadio) {
+        const defaultLabel = defaultRadio.nextElementSibling;
+        defaultLabel.classList.add('selected');
+    }
+});
+</script>
+{% endblock %}

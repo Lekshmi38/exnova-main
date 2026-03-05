@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question Paper Count Report</title>
+    <style>
+        @media print {
+            @page {
+                size: A4;
+                margin: 20mm;
+            }
+
+            body {
+                font-family: 'Arial', sans-serif;
+                line-height: 1.4;
+                color: #000;
+                background: #fff;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .print-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 3px double #2c3e50;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 10px 0;
+            font-size: 28px;
+        }
+
+        .header .exam-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+        }
+
+        .subject-summary {
+            margin-bottom: 30px;
+        }
+
+        .subject-summary h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .subject-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .subject-card {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .subject-card .subject-name {
+            font-weight: 600;
+            color: #2c3e50;
+            flex: 1;
+        }
+
+        .subject-card .subject-count {
+            background: #3498db;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 16px;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .total-students {
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        .total-students .count {
+            font-size: 36px;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .total-students .label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .room-distribution {
+            margin-top: 30px;
+        }
+
+        .room-distribution h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #27ae60;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .room-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .room-table th {
+            background: #2c3e50;
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .room-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .room-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .room-number {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .btn-print {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-print:hover {
+            background: #2980b9;
+        }
+
+        .btn-download {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #219653;
+        }
+
+        .btn-back {
+            background: #7f8c8d;
+            color: white;
+        }
+
+        .btn-back:hover {
+            background: #6c7b7d;
+        }
+
+        .signature-section {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px dashed #ccc;
+        }
+
+        .signature-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+
+        .signature-box {
+            text-align: center;
+            width: 200px;
+        }
+
+        .signature-line {
+            border-top: 1px solid #000;
+            margin: 40px 0 5px 0;
+            width: 100%;
+        }
+
+        .signature-label {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .timestamp {
+            text-align: center;
+            color: #777;
+            font-size: 12px;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .print-container {
+                padding: 15px;
+            }
+
+            .subject-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .room-table {
+                font-size: 14px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .signature-row {
+                flex-direction: column;
+                gap: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-container">
+        <div class="header">
+            <h1>QUESTION PAPER COUNT REPORT</h1>
+            <div class="exam-info">
+                <div>
+                    <strong>Examination Type:</strong> {{ params.exam_type or session.exam_type }}<br>
+                    <strong>Semester:</strong> {{ params.semester }}<br>
+                    <strong>Slot:</strong> {{ params.slot }}
+                </div>
+                <div>
+                    <strong>Date:</strong> {{ params.exam_date }}<br>
+                    <strong>Month-Year:</strong> {{ params.month_year }}<br>
+                    <strong>Generated:</strong> {{ current_time }}
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h3 style="margin-top: 0; color: #2c3e50;">
+                <i class="fas fa-info-circle"></i> Report Summary
+            </h3>
+            <p>This report shows the distribution of question papers required for each subject across all examination rooms.</p>
+        </div>
+
+        {% if arrangement.qp_summary %}
+        <div class="subject-summary">
+            <h2>SUBJECT WISE SUMMARY</h2>
+            <div class="subject-grid">
+                {% for subject_name, count in arrangement.qp_summary.subject_summary.items() %}
+                <div class="subject-card">
+                    <span class="subject-name">{{ subject_name }}</span>
+                    <span class="subject-count">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="total-students">
+            <span class="count">{{ arrangement.qp_summary.total_students }}</span>
+            <span class="label">TOTAL STUDENTS</span>
+        </div>
+
+        <div class="room-distribution">
+            <h2>ROOM WISE DISTRIBUTION</h2>
+            <table class="room-table">
+                <thead>
+                    <tr>
+                        <th>Room No.</th>
+                        <th>Subject</th>
+                        <th>Student Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in arrangement.qp_summary.room_wise %}
+                    <tr>
+                        <td class="room-number">{{ item.Room }}</td>
+                        <td>{{ item.Subject }}</td>
+                        <td><strong>{{ item['Student Count'] }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="signature-section">
+            <div class="signature-row">
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div class="signature-label">Exam Coordinator</div>
+                </div>
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div class="signature-label">Hall Superintendent</div>
+                </div>
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div class="signature-label">Chief Superintendent</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="timestamp">
+            Report generated on {{ current_time }} | Automated Seating Arrangement System
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 40px; color: #e74c3c;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 20px;"></i>
+            <h3>No QP Count Data Available</h3>
+            <p>Question paper count information could not be generated.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="controls no-print">
+        <button class="btn btn-print" onclick="window.print()">
+            <i class="fas fa-print"></i> Print Report
+        </button>
+        <button class="btn btn-download" onclick="downloadAsPDF()">
+            <i class="fas fa-download"></i> Download PDF
+        </button>
+        <a href="{{ url_for('allocation') }}" class="btn btn-back">
+            <i class="fas fa-arrow-left"></i> Back to Allocation
+        </a>
+    </div>
+
+    <script>
+        // Set current time
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const options = {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            const currentTimeElements = document.querySelectorAll('.current-time');
+            currentTimeElements.forEach(el => {
+                el.textContent = now.toLocaleDateString('en-US', options);
+            });
+        });
+
+        function downloadAsPDF() {
+            alert('PDF download would be implemented with a PDF library like jsPDF or a server-side solution.');
+            // For now, just print
+            window.print();
+        }
+    </script>
+
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</body>
+</html>

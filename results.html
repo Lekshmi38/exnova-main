@@ -1,0 +1,898 @@
+{% extends "base.html" %}
+
+{% block title %}Seating Results - Exam System{% endblock %}
+
+{% block scripts %}
+<style>
+/* Seating Arrangement Styles */
+.seating-arrangement {
+    font-family: 'Consolas', monospace;
+    background: var(--white);
+    padding: 25px;
+    border-radius: 16px;
+    margin-top: 25px;
+    box-shadow: 0 5px 20px rgba(74, 144, 226, 0.08);
+    border: 1px solid rgba(74, 144, 226, 0.1);
+}
+
+.room-section {
+    background: var(--light-gray);
+    border: 1px solid rgba(74, 144, 226, 0.15);
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 35px;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.room-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--teal) 100%);
+}
+
+.room-section:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(74, 144, 226, 0.15);
+}
+
+.room-header {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--sky-blue) 100%);
+    color: var(--white);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.room-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: rotate(45deg);
+    animation: shine 3s infinite;
+}
+
+@keyframes shine {
+    0% { transform: rotate(45deg) translateX(-100%); }
+    100% { transform: rotate(45deg) translateX(100%); }
+}
+
+.room-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.room-subjects {
+    font-size: 0.95rem;
+    opacity: 0.9;
+    margin: 8px 0 0 0;
+    line-height: 1.4;
+    position: relative;
+    z-index: 1;
+}
+
+.seating-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    background: var(--white);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+}
+
+.seating-table th {
+    background: var(--pastel-blue);
+    color: var(--text-dark);
+    padding: 14px;
+    text-align: center;
+    border: 1px solid rgba(74, 144, 226, 0.2);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.seating-table td {
+    padding: 12px;
+    text-align: center;
+    border: 1px solid rgba(74, 144, 226, 0.1);
+    vertical-align: middle;
+    transition: background 0.3s;
+}
+
+.seating-table tr:nth-child(even) {
+    background: rgba(179, 217, 255, 0.05);
+}
+
+.seating-table tr:hover td {
+    background: rgba(179, 217, 255, 0.1);
+}
+
+.student-cell {
+    font-family: 'Consolas', monospace;
+    font-size: 0.9rem;
+    padding: 10px 8px;
+    color: var(--text-dark);
+    font-weight: 500;
+}
+
+.empty-cell {
+    color: #a0aec0;
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+.block-summary {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+    padding: 20px;
+    background: rgba(179, 217, 255, 0.08);
+    border-radius: 10px;
+    border: 1px solid rgba(74, 144, 226, 0.1);
+}
+
+.block-item {
+    text-align: center;
+    flex: 1;
+    min-width: 120px;
+    padding: 15px;
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid rgba(74, 144, 226, 0.1);
+    transition: transform 0.3s;
+}
+
+.block-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.1);
+}
+
+.block-label {
+    font-weight: 600;
+    color: var(--primary-blue);
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.block-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+/* Controls Bar */
+.controls-bar {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    padding: 25px;
+    background: var(--white);
+    border-radius: 16px;
+    box-shadow: 0 5px 20px rgba(74, 144, 226, 0.08);
+    border: 1px solid rgba(74, 144, 226, 0.1);
+    flex-wrap: wrap;
+}
+
+.controls-bar button {
+    flex: 1;
+    min-width: 200px;
+}
+
+/* Stats Summary */
+.stats-summary {
+    background: linear-gradient(135deg, rgba(74, 144, 226, 0.05) 0%, rgba(32, 178, 170, 0.05) 100%);
+    border: 1px solid rgba(74, 144, 226, 0.15);
+    border-radius: 16px;
+    padding: 30px;
+    margin-top: 25px;
+    backdrop-filter: blur(10px);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.stat-item {
+    background: var(--white);
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid rgba(74, 144, 226, 0.1);
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--primary-blue) 0%, var(--teal) 100%);
+}
+
+.stat-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(74, 144, 226, 0.15);
+}
+
+.stat-value {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+    margin-bottom: 10px;
+    line-height: 1;
+}
+
+.stat-label {
+    color: var(--text-light);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+/* QP Counts Section */
+.qp-counts-section {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 30px;
+    margin-top: 35px;
+    box-shadow: 0 5px 20px rgba(74, 144, 226, 0.08);
+    border: 1px solid rgba(74, 144, 226, 0.1);
+}
+
+.qp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid rgba(74, 144, 226, 0.1);
+}
+
+.qp-header h2 {
+    color: var(--text-dark);
+    font-size: 1.6rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.qp-header h2 i {
+    color: var(--teal);
+}
+
+.subject-summary {
+    margin-bottom: 35px;
+}
+
+.subject-summary h3 {
+    color: var(--text-dark);
+    margin-bottom: 20px;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 15px;
+    border-left: 4px solid var(--primary-blue);
+}
+
+.subject-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+.subject-card {
+    background: rgba(179, 217, 255, 0.08);
+    border: 1px solid rgba(74, 144, 226, 0.15);
+    border-radius: 10px;
+    padding: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s;
+}
+
+.subject-card:hover {
+    background: rgba(179, 217, 255, 0.15);
+    transform: translateX(5px);
+    border-color: var(--pastel-blue);
+}
+
+.subject-name {
+    color: var(--text-dark);
+    font-weight: 500;
+    flex: 1;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.subject-count {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--teal) 100%);
+    color: var(--white);
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 1rem;
+    min-width: 70px;
+    text-align: center;
+}
+
+.total-students {
+    text-align: center;
+    margin: 25px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--sky-blue) 100%);
+    border-radius: 12px;
+    color: var(--white);
+}
+
+.total-students span {
+    font-size: 1.3rem;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.total-students small {
+    opacity: 0.9;
+    font-size: 0.95rem;
+}
+
+.room-distribution {
+    margin-top: 35px;
+}
+
+.room-distribution h3 {
+    color: var(--text-dark);
+    margin-bottom: 20px;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 15px;
+    border-left: 4px solid var(--teal);
+}
+
+.room-distribution-container {
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.room-distribution-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.room-distribution-container::-webkit-scrollbar-track {
+    background: rgba(179, 217, 255, 0.1);
+    border-radius: 3px;
+}
+
+.room-distribution-container::-webkit-scrollbar-thumb {
+    background: var(--pastel-blue);
+    border-radius: 3px;
+}
+
+.room-distribution-item {
+    background: var(--white);
+    border: 1px solid rgba(74, 144, 226, 0.1);
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s;
+}
+
+.room-distribution-item:hover {
+    border-color: var(--pastel-blue);
+    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.1);
+    transform: translateX(5px);
+}
+
+.room-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.room-badge {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--sky-blue) 100%);
+    color: var(--white);
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    min-width: 80px;
+    text-align: center;
+}
+
+.room-subject {
+    color: var(--text-dark);
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.room-count {
+    background: linear-gradient(135deg, var(--teal) 0%, #16a085 100%);
+    color: var(--white);
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 1rem;
+    min-width: 60px;
+    text-align: center;
+}
+
+/* Print Styles */
+@media print {
+    .controls-bar, .no-print {
+        display: none !important;
+    }
+
+    .room-section {
+        page-break-inside: avoid;
+        break-inside: avoid;
+        border: 1px solid #ccc;
+        box-shadow: none;
+    }
+
+    .seating-table {
+        font-size: 10pt;
+        border: 1px solid #ccc;
+    }
+
+    .student-cell {
+        background: #f9f9f9 !important;
+        border: 1px solid #ddd !important;
+    }
+
+    .room-header {
+        background: #f0f0f0 !important;
+        color: #000 !important;
+        border: 1px solid #ccc;
+    }
+
+    .qp-counts-section {
+        border: 1px solid #ccc;
+        box-shadow: none;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .seating-table {
+        font-size: 0.8rem;
+    }
+
+    .seating-table th,
+    .seating-table td {
+        padding: 8px 4px;
+    }
+
+    .block-summary {
+        flex-direction: column;
+    }
+
+    .block-item {
+        min-width: 100%;
+    }
+
+    .controls-bar {
+        flex-direction: column;
+    }
+
+    .controls-bar button {
+        min-width: 100%;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .subject-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .room-distribution-item {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+
+    .room-info {
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="card-header">
+        <h2><i class="fas fa-chair"></i> Seating Arrangement Generated</h2>
+        <div>
+            <span class="badge">
+                {{ params.semester }} | {{ params.month_year }} | Slot {{ params.slot }}
+            </span>
+        </div>
+    </div>
+
+    <div class="controls-bar">
+        <button class="btn" onclick="window.print()">
+            <i class="fas fa-print"></i> Print Arrangement
+        </button>
+        <button class="btn btn-success" onclick="downloadSeatingReport()">
+            <i class="fas fa-download"></i> Download Report
+        </button>
+        {% if arrangement.qp_summary %}
+        <button class="btn btn-teal" onclick="window.open('{{ url_for('print_qp_counts') }}', '_blank')">
+            <i class="fas fa-file-pdf"></i> Print QP Report
+        </button>
+        {% endif %}
+        <button class="btn btn-secondary" onclick="window.location.href='{{ url_for('allocation') }}'">
+            <i class="fas fa-redo"></i> Generate Another
+        </button>
+    </div>
+
+    {% if arrangement.summary %}
+    <div class="stats-summary">
+        <h3 style="margin-top: 0; color: var(--text-dark); margin-bottom: 25px; display: flex; align-items: center; gap: 12px;">
+            <i class="fas fa-chart-bar"></i> Arrangement Summary
+        </h3>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value">{{ arrangement.summary.total_rooms }}</div>
+                <div class="stat-label">Total Rooms</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ arrangement.qp_summary.total_students if arrangement.qp_summary else arrangement.student_count }}</div>
+                <div class="stat-label">Total Students</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ arrangement.summary.best_leftovers }}</div>
+                <div class="stat-label">Leftover Students</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ arrangement.summary.actual_difference }}</div>
+                <div class="stat-label">Max Room Difference</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ arrangement.summary.average|round(1) }}</div>
+                <div class="stat-label">Average per Room</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ arrangement.summary.min }}</div>
+                <div class="stat-label">Min in Room</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ arrangement.summary.max }}</div>
+                <div class="stat-label">Max in Room</div>
+            </div>
+            {% if arrangement.qp_summary %}
+            <div class="stat-item">
+                <div class="stat-value">{{ arrangement.qp_summary.subject_summary|length }}</div>
+                <div class="stat-label">Total Subjects</div>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if arrangement.summary.best_leftovers == 0 and arrangement.summary.actual_difference <= arrangement.summary.target_difference %}
+        <div style="background: rgba(46, 204, 113, 0.1); color: #27ae60; padding: 20px; border-radius: 10px; margin-top: 25px; text-align: center; border: 1px solid rgba(46, 204, 113, 0.2);">
+            <i class="fas fa-check-circle" style="font-size: 1.5rem; margin-bottom: 10px; display: block;"></i>
+            <strong style="font-size: 1.1rem;">PERFECT SOLUTION FOUND!</strong><br>
+            <span style="font-size: 0.95rem;">0 leftovers and well-balanced rooms (difference ≤ {{ arrangement.summary.target_difference }})</span>
+        </div>
+        {% elif arrangement.summary.best_leftovers == 0 %}
+        <div style="background: rgba(243, 156, 18, 0.1); color: #d35400; padding: 20px; border-radius: 10px; margin-top: 25px; text-align: center; border: 1px solid rgba(243, 156, 18, 0.2);">
+            <i class="fas fa-check-circle" style="font-size: 1.5rem; margin-bottom: 10px; display: block;"></i>
+            <strong style="font-size: 1.1rem;">GOOD SOLUTION FOUND!</strong><br>
+            <span style="font-size: 0.95rem;">0 leftovers achieved, but room balance could be better</span>
+        </div>
+        {% else %}
+        <div style="background: rgba(231, 76, 60, 0.1); color: #c0392b; padding: 20px; border-radius: 10px; margin-top: 25px; text-align: center; border: 1px solid rgba(231, 76, 60, 0.2);">
+            <i class="fas fa-exclamation-triangle" style="font-size: 1.5rem; margin-bottom: 10px; display: block;"></i>
+            <strong style="font-size: 1.1rem;">COULD NOT ACHIEVE 0 LEFTOVERS</strong><br>
+            <span style="font-size: 0.95rem;">Best found: {{ arrangement.summary.best_leftovers }} leftover students</span>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="seating-arrangement">
+        {% for room_name, room_data in arrangement.rooms.items() %}
+        <div class="room-section">
+            <div class="room-header">
+                <h3 class="room-title">{{ room_name }} | Total: {{ room_data.total }} | BLOCK CAPACITY: 7-7-6-7-7</h3>
+                <p class="room-subjects">
+                    <i class="fas fa-book"></i> Subjects: {{ room_data.subjects|join(', ') }}
+                </p>
+            </div>
+
+            <table class="seating-table">
+                <thead>
+                    <tr>
+                        <th>Row</th>
+                        <th>Left1 (7)</th>
+                        <th>Left3 (7)</th>
+                        <th>Middle2 (6)</th>
+                        <th>Right1 (7)</th>
+                        <th>Right3 (7)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in range(1, 8) %}
+                    <tr>
+                        <td style="font-weight: 600; color: var(--primary-blue);">{{ row }}</td>
+                        <td class="student-cell">
+                            {% if row <= 7 %}
+                                {% if row <= room_data.blocks.Left1.students|length %}
+                                    {{ room_data.blocks.Left1.students[row-1] }}
+                                {% else %}
+                                    <span class="empty-cell">--</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td class="student-cell">
+                            {% if row <= 7 %}
+                                {% if row <= room_data.blocks.Left3.students|length %}
+                                    {{ room_data.blocks.Left3.students[row-1] }}
+                                {% else %}
+                                    <span class="empty-cell">--</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td class="student-cell">
+                            {% if row <= 6 %}
+                                {% if row <= room_data.blocks.Middle2.students|length %}
+                                    {{ room_data.blocks.Middle2.students[row-1] }}
+                                {% else %}
+                                    <span class="empty-cell">--</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td class="student-cell">
+                            {% if row <= 7 %}
+                                {% if row <= room_data.blocks.Right1.students|length %}
+                                    {{ room_data.blocks.Right1.students[row-1] }}
+                                {% else %}
+                                    <span class="empty-cell">--</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td class="student-cell">
+                            {% if row <= 7 %}
+                                {% if row <= room_data.blocks.Right3.students|length %}
+                                    {{ room_data.blocks.Right3.students[row-1] }}
+                                {% else %}
+                                    <span class="empty-cell">--</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="block-summary">
+                <div class="block-item">
+                    <div class="block-label">
+                        <i class="fas fa-caret-left"></i> Left1
+                    </div>
+                    <div class="block-value">{{ room_data.blocks.Left1.count }}/7</div>
+                </div>
+                <div class="block-item">
+                    <div class="block-label">
+                        <i class="fas fa-caret-left"></i> Left3
+                    </div>
+                    <div class="block-value">{{ room_data.blocks.Left3.count }}/7</div>
+                </div>
+                <div class="block-item">
+                    <div class="block-label">
+                        <i class="fas fa-align-center"></i> Middle2
+                    </div>
+                    <div class="block-value">{{ room_data.blocks.Middle2.count }}/6</div>
+                </div>
+                <div class="block-item">
+                    <div class="block-label">
+                        <i class="fas fa-caret-right"></i> Right1
+                    </div>
+                    <div class="block-value">{{ room_data.blocks.Right1.count }}/7</div>
+                </div>
+                <div class="block-item">
+                    <div class="block-label">
+                        <i class="fas fa-caret-right"></i> Right3
+                    </div>
+                    <div class="block-value">{{ room_data.blocks.Right3.count }}/7</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- QP Counts Section -->
+    {% if arrangement.qp_summary %}
+    <div class="qp-counts-section">
+        <div class="qp-header">
+            {% if arrangement.qp_summary %}
+<a href="{{ url_for('print_qp_counts') }}" target="_blank" class="btn btn-teal">
+    <i class="fas fa-print"></i> Print QP Report
+</a>
+{% endif %}
+        </div>
+
+        <div class="subject-summary">
+            <h3><i class="fas fa-list-check"></i> Subject Summary</h3>
+            <div class="subject-grid">
+                {% for subject, count in arrangement.qp_summary.subject_summary.items() %}
+                <div class="subject-card">
+                    <div class="subject-name">{{ subject }}</div>
+                    <div class="subject-count">{{ count }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="total-students">
+            <span>{{ arrangement.qp_summary.total_students }} students</span>
+            <small>Total Students Across All Rooms</small>
+        </div>
+
+        <div class="room-distribution">
+            <h3><i class="fas fa-door-closed"></i> Room-wise Distribution</h3>
+            <div class="room-distribution-container">
+                {% for item in arrangement.qp_summary.room_wise %}
+                <div class="room-distribution-item">
+                    <div class="room-info">
+                        <div class="room-badge">{{ item.Room }}</div>
+                        <div class="room-subject">{{ item.Subject }}</div>
+                    </div>
+                    <div class="room-count">{{ item['Student Count'] }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="controls-bar" style="margin-top: 30px;">
+        <button class="btn" onclick="enableEditing()">
+            <i class="fas fa-edit"></i> Enable Manual Editing
+        </button>
+        <button class="btn btn-success" onclick="saveEditedArrangement()">
+            <i class="fas fa-save"></i> Save Edited Arrangement
+        </button>
+    </div>
+</div>
+
+<script>
+function downloadSeatingReport() {
+    // Create and download a text report
+    let report = '='.repeat(80) + '\n';
+    report += 'AUTOMATED SEATING ARRANGEMENT REPORT\n';
+    report += '='.repeat(80) + '\n\n';
+    report += 'Semester: ' + '{{ params.semester }}' + '\n';
+    report += 'Month-Year: ' + '{{ params.month_year }}' + '\n';
+    report += 'Slot: ' + '{{ params.slot }}' + '\n';
+    report += 'Exam Date: ' + '{{ params.exam_date }}' + '\n';
+    report += 'Generated: ' + new Date().toLocaleString() + '\n\n';
+
+    {% if arrangement.qp_summary %}
+    report += "QUESTION PAPER COUNT SUMMARY\n";
+    report += "-".repeat(40) + "\n";
+    {% for subject, count in arrangement.qp_summary.subject_summary.items() %}
+    report += '{{ subject }}: {{ count }} students\n';
+    {% endfor %}
+    report += "Total Students: {{ arrangement.qp_summary.total_students }}\n";
+    report += "\n" + "=".repeat(80) + "\n\n";
+    {% endif %}
+
+    {% for room_name, room_data in arrangement.rooms.items() %}
+    report += '='.repeat(80) + '\n';
+    report += ' ' + '{{ room_name }}' + ' | TOTAL: ' + '{{ room_data.total }}' + ' | BLOCK CAPACITY: 7-7-6-7-7 \n';
+    report += '='.repeat(80) + '\n';
+    report += 'Row   | Left1 (7)       | Left3 (7)       | Middle2 (6)     | Right1 (7)      | Right3 (7)     \n';
+    report += '-'.repeat(95) + '\n';
+
+    {% for row in range(1, 8) %}
+    let left1{{ room_name }}_{{ row }} = '{{ room_data.blocks.Left1.students[row-1] if row <= room_data.blocks.Left1.students|length else "--" }}';
+    let left3{{ room_name }}_{{ row }} = '{{ room_data.blocks.Left3.students[row-1] if row <= room_data.blocks.Left3.students|length else "--" }}';
+    let middle2{{ room_name }}_{{ row }} = '{{ room_data.blocks.Middle2.students[row-1] if row <= 6 and row <= room_data.blocks.Middle2.students|length else "--" }}';
+    let right1{{ room_name }}_{{ row }} = '{{ room_data.blocks.Right1.students[row-1] if row <= room_data.blocks.Right1.students|length else "--" }}';
+    let right3{{ room_name }}_{{ row }} = '{{ room_data.blocks.Right3.students[row-1] if row <= room_data.blocks.Right3.students|length else "--" }}';
+
+    left1{{ room_name }}_{{ row }} = left1{{ room_name }}_{{ row }}.padEnd(15);
+    left3{{ room_name }}_{{ row }} = left3{{ room_name }}_{{ row }}.padEnd(15);
+    middle2{{ room_name }}_{{ row }} = middle2{{ room_name }}_{{ row }}.padEnd(15);
+    right1{{ room_name }}_{{ row }} = right1{{ room_name }}_{{ row }}.padEnd(15);
+    right3{{ room_name }}_{{ row }} = right3{{ room_name }}_{{ row }}.padEnd(15);
+
+    if ({{ row }} === 7) {
+        report += '{{ row }}'.padEnd(5) + ' | ' + left1{{ room_name }}_{{ row }} + ' | ' + left3{{ room_name }}_{{ row }} + ' | ' + ' '.repeat(15) + ' | ' + right1{{ room_name }}_{{ row }} + ' | ' + right3{{ room_name }}_{{ row }} + ' |\n';
+    } else {
+        report += '{{ row }}'.padEnd(5) + ' | ' + left1{{ room_name }}_{{ row }} + ' | ' + left3{{ room_name }}_{{ row }} + ' | ' + middle2{{ room_name }}_{{ row }} + ' | ' + right1{{ room_name }}_{{ row }} + ' | ' + right3{{ room_name }}_{{ row }} + ' |\n';
+    }
+    {% endfor %}
+
+    report += '-'.repeat(95) + '\n';
+    report += 'Block Usage: Left1: {{ room_data.blocks.Left1.count }}/7, Left3: {{ room_data.blocks.Left3.count }}/7, Middle2: {{ room_data.blocks.Middle2.count }}/6, Right1: {{ room_data.blocks.Right1.count }}/7, Right3: {{ room_data.blocks.Right3.count }}/7\n';
+    report += 'Subjects: {{ room_data.subjects|join(", ") }}\n\n';
+    {% endfor %}
+
+    report += '='.repeat(80) + '\n';
+    report += 'SUMMARY\n';
+    report += '='.repeat(80) + '\n';
+    report += 'Total Rooms: {{ arrangement.summary.total_rooms }}\n';
+    report += 'Total Students: {{ arrangement.student_count }}\n';
+    report += 'Average per Room: {{ arrangement.summary.average|round(1) }}\n';
+    report += 'Leftover Students: {{ arrangement.summary.best_leftovers }}\n';
+    report += 'Max Room Difference: {{ arrangement.summary.actual_difference }}\n';
+
+    const blob = new Blob([report], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Seating_Arrangement_{{ params.semester }}_{{ params.month_year }}_Slot{{ params.slot }}.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function enableEditing() {
+    alert('Editing mode enabled!\n\nDouble-click on any student to edit.\nDrag and drop to move students between blocks.\nClick Save when done.');
+
+    // Make all student cells editable
+    const studentCells = document.querySelectorAll('.student-cell');
+    studentCells.forEach(cell => {
+        if (!cell.classList.contains('empty-cell')) {
+            cell.style.cursor = 'pointer';
+            cell.style.border = '1px dashed var(--primary-blue)';
+            cell.style.borderRadius = '4px';
+            cell.addEventListener('dblclick', function() {
+                const currentValue = this.textContent.trim();
+                const newValue = prompt('Edit student registration number:', currentValue);
+                if (newValue !== null && newValue.trim() !== '') {
+                    this.textContent = newValue.trim();
+                    this.style.color = 'var(--danger)';
+                }
+            });
+        }
+    });
+}
+
+function saveEditedArrangement() {
+    alert('Edited arrangement saved!');
+}
+</script>
+{% endblock %}

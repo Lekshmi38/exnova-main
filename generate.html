@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}Data Upload - Exam System{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="card-header">
+        <h2><i class="fas fa-upload"></i> Upload Master File</h2>
+        {% if session.get('exam_type') %}
+        <span class="badge">
+            {{ session.exam_type }} Exam
+        </span>
+        {% endif %}
+    </div>
+
+    {% if not session.get('exam_type') %}
+    <div class="alert">
+        <i class="fas fa-exclamation-triangle"></i>
+        Please set the examination type first from the Home page.
+        <a href="{{ url_for('index') }}" class="btn">
+            <i class="fas fa-home"></i> Go to Home
+        </a>
+    </div>
+    {% else %}
+    <form method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="semester"><i class="fas fa-layer-group"></i> Semester</label>
+            <select name="semester" id="semester" required>
+                <option value="">Select Semester</option>
+                <option value="S1">Semester 1</option>
+                <option value="S2">Semester 2</option>
+                <option value="S3">Semester 3</option>
+                <option value="S4">Semester 4</option>
+                <option value="S5">Semester 5</option>
+                <option value="S6">Semester 6</option>
+                <option value="S7">Semester 7</option>
+                <option value="S8">Semester 8</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="month_year"><i class="fas fa-calendar"></i> Month-Year</label>
+            <input type="month" id="month_year" name="month_year" required>
+            <small style="color: var(--text-light); font-size: 0.9rem;">Select month and year of examination</small>
+        </div>
+
+        <!-- Elective Type Selection -->
+        <div class="form-group">
+            <label><i class="fas fa-graduation-cap"></i> Elective Type Selection</label>
+            <div class="elective-options">
+                <div class="radio-option">
+                    <input type="radio" id="general" name="elective_type" value="general" checked>
+                    <label for="general" class="radio-label">
+                        <span class="radio-circle">
+                            <span class="radio-inner"></span>
+                        </span>
+                        <i class="fas fa-cogs"></i>
+                        <div>
+                            <strong>General Algorithm</strong>
+                            <small>Standard seating arrangement (Default)</small>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="radio-option">
+                    <input type="radio" id="program_elective" name="elective_type" value="program_elective">
+                    <label for="program_elective" class="radio-label">
+                        <span class="radio-circle">
+                            <span class="radio-inner"></span>
+                        </span>
+                        <i class="fas fa-code"></i>
+                        <div>
+                            <strong>Program Elective</strong>
+                            <small>Use program_elect.py algorithm</small>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="radio-option">
+                    <input type="radio" id="open_elective" name="elective_type" value="open_elective">
+                    <label for="open_elective" class="radio-label">
+                        <span class="radio-circle">
+                            <span class="radio-inner"></span>
+                        </span>
+                        <i class="fas fa-book-open"></i>
+                        <div>
+                            <strong>Open Elective</strong>
+                            <small>Use open_elect.py algorithm</small>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <small style="color: var(--text-light); font-size: 0.9rem; display: block; margin-top: 8px;">
+                <i class="fas fa-info-circle"></i> Select the algorithm type for seating arrangement generation
+            </small>
+        </div>
+
+        <div class="form-group">
+            <label><i class="fas fa-file-excel"></i> Master File Upload</label>
+            <div class="file-upload">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Click to upload master Excel file</p>
+                <span>File should contain: Student, Register No, Branch, Slot, Course, Exam Date</span>
+                <input type="file" name="master_file" accept=".xlsx,.xls" required>
+            </div>
+        </div>
+
+        <button type="submit" class="btn">
+            <i class="fas fa-upload"></i> Upload & Process File
+        </button>
+    </form>
+
+    <div class="instruction-card" style="margin-top: 30px;">
+        <h3><i class="fas fa-info-circle"></i> Folder Structure Created</h3>
+        <p style="color: var(--text-light); line-height: 1.6;">
+            Files will be organized in: <br>
+            <code style="background: var(--light-blue); padding: 8px 12px; border-radius: 6px; display: inline-block; margin-top: 10px;">
+                {{ session.exam_type }}/semester/month-year/<br>
+                ├── master_list/Master_Sorted_List.xlsx<br>
+                ├── slot_A/date/Slot_A_date_Sorted_List.xlsx<br>
+                └── slot_B/date/Slot_B_date_Sorted_List.xlsx
+            </code>
+        </p>
+        <p style="color: var(--text-light); margin-top: 10px;">
+            <strong>Note:</strong> For elective types, separate folders will be created.
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.elective-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.radio-option {
+    position: relative;
+}
+
+.radio-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.radio-option .radio-label {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: var(--card-bg);
+    position: relative;
+}
+
+.radio-option .radio-label:hover {
+    border-color: var(--primary-color);
+    background: rgba(var(--primary-rgb), 0.02);
+}
+
+.radio-option .radio-label i {
+    font-size: 24px;
+    margin-right: 15px;
+    color: var(--text-light);
+}
+
+.radio-option .radio-label div {
+    flex: 1;
+}
+
+.radio-option .radio-label strong {
+    display: block;
+    color: var(--text-color);
+    margin-bottom: 4px;
+    font-size: 1rem;
+}
+
+.radio-option .radio-label small {
+    color: var(--text-light);
+    font-size: 0.85rem;
+}
+
+/* Custom radio button */
+.radio-circle {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    margin-right: 12px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.radio-inner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 10px;
+    height: 10px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+/* Selected state */
+.radio-option input[type="radio"]:checked + .radio-label {
+    border-color: var(--primary-color);
+    background: rgba(var(--primary-rgb), 0.05);
+    box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.1);
+}
+
+.radio-option input[type="radio"]:checked + .radio-label .radio-circle {
+    border-color: var(--primary-color);
+    background: rgba(var(--primary-rgb), 0.1);
+}
+
+.radio-option input[type="radio"]:checked + .radio-label .radio-inner {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.radio-option input[type="radio"]:checked + .radio-label i {
+    color: var(--primary-color);
+}
+
+/* Add focus state for accessibility */
+.radio-option input[type="radio"]:focus + .radio-label {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Add a subtle indicator for the default selection */
+.radio-option input[type="radio"][value="general"]:checked + .radio-label::after {
+    content: "Default";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--primary-color);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+</style>
+
+<script>
+// Add JavaScript for better visual feedback
+document.addEventListener('DOMContentLoaded', function() {
+    const radioOptions = document.querySelectorAll('.radio-option input[type="radio"]');
+    
+    // Function to update visual state
+    function updateSelection() {
+        radioOptions.forEach(radio => {
+            const label = radio.nextElementSibling;
+            if (radio.checked) {
+                label.classList.add('selected');
+            } else {
+                label.classList.remove('selected');
+            }
+        });
+    }
+    
+    // Initialize selection
+    updateSelection();
+    
+    // Add event listeners
+    radioOptions.forEach(radio => {
+        radio.addEventListener('change', updateSelection);
+    });
+    
+    // Add click effect
+    document.querySelectorAll('.radio-label').forEach(label => {
+        label.addEventListener('click', function() {
+            // Add a quick animation effect
+            this.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+    });
+});
+</script>
+{% endblock %}
